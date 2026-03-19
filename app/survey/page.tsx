@@ -1,18 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
 
-export default function Survey(){
+export default function Survey() {
+  const [score, setScore] = useState<number>(0);
+  const [user, setUser] = useState<User | null>(null);
 
-  const [score,setScore] = useState(0);
+  // 🔐 Get logged-in user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const submitSurvey = async () => {
+    if (!user) {
+      alert("You must be logged in");
+      return;
+    }
 
-    const user = auth.currentUser;
-
-    await addDoc(collection(db,"surveys"),{
+    await addDoc(collection(db, "surveys"), {
       userId: user.uid,
       burnoutScore: score,
       date: new Date()
@@ -21,22 +33,21 @@ export default function Survey(){
     alert("Survey saved");
   };
 
-  return(
+  return (
     <div>
-
       <h1>Burnout Survey</h1>
 
       <input
         type="number"
         min="1"
         max="5"
-        onChange={(e)=>setScore(e.target.value)}
+        value={score}
+        onChange={(e) => setScore(Number(e.target.value))}
       />
 
       <button onClick={submitSurvey}>
         Submit
       </button>
-
     </div>
   );
 }
