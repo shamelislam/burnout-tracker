@@ -1,12 +1,13 @@
 "use client";
 
+import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [scores, setScores] = useState([]);
 
   useEffect(() => {
