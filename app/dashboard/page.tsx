@@ -1,10 +1,10 @@
 "use client";
 
-import { User } from "firebase/auth";
+
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
@@ -12,9 +12,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Check if user is logged in
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
+       if (currentUser) {
+       setUser(currentUser);
 
         // Fetch this user's survey data
         const q = query(
