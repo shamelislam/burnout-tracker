@@ -8,7 +8,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
-  const [scores, setScores] = useState([]);
+  const [scores, setScores] = useState<any[]>([]);
 
   useEffect(() => {
     // Check if user is logged in
