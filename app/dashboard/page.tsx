@@ -24,7 +24,7 @@ export default function Dashboard() {
 
         const querySnapshot = await getDocs(q);
 
-        const userScores = [];
+        const userScores: any[] = [];
         querySnapshot.forEach((doc) => {
           userScores.push(doc.data());
         });
