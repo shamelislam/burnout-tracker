@@ -1,7 +1,8 @@
 "use client";
 
 export const dynamic = "force-dynamic";
-import { useEffect, useState } from "react";
+
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -17,7 +18,7 @@ import {
 
 import { calculateBurnout, getBurnoutLevel } from "@/lib/scoring";
 
-export default function Survey() {
+function SurveyContent() {
   const params = useSearchParams();
   const type = params.get("type") || "general";
 
@@ -35,7 +36,7 @@ export default function Survey() {
   else if (type === "habit") survey = habitSurvey;
 
   const handleChange = (id: string, val: number) => {
-    setAnswers({ ...answers, [id]: val });
+    setAnswers((prev: any) => ({ ...prev, [id]: val }));
   };
 
   const isSameWeek = (d1: Date, d2: Date) => {
@@ -45,8 +46,10 @@ export default function Survey() {
         ((d.getTime() - oneJan.getTime()) / 86400000 + oneJan.getDay() + 1) / 7
       );
 
-    return getWeek(d1) === getWeek(d2) &&
-           d1.getFullYear() === d2.getFullYear();
+    return (
+      getWeek(d1) === getWeek(d2) &&
+      d1.getFullYear() === d2.getFullYear()
+    );
   };
 
   const submit = async () => {
@@ -72,9 +75,11 @@ export default function Survey() {
       if (type === "weekly" && isSameWeek(prev, now))
         block = true;
 
-      if (type === "monthly" &&
+      if (
+        type === "monthly" &&
         prev.getMonth() === now.getMonth() &&
-        prev.getFullYear() === now.getFullYear())
+        prev.getFullYear() === now.getFullYear()
+      )
         block = true;
     });
 
@@ -92,6 +97,7 @@ export default function Survey() {
     });
 
     alert(`Submitted! Score: ${score}`);
+    window.location.href = "/dashboard"; // ✅ redirect
   };
 
   return (
@@ -125,7 +131,9 @@ export default function Survey() {
             >
               <option value="">Select</option>
               {q.options.map((o, i) => (
-                <option key={i} value={i}>{o}</option>
+                <option key={i} value={i}>
+                  {o}
+                </option>
               ))}
             </select>
           )}
@@ -134,5 +142,14 @@ export default function Survey() {
 
       <button onClick={submit}>Submit</button>
     </div>
+  );
+}
+
+// ✅ REQUIRED for useSearchParams
+export default function Survey() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SurveyContent />
+    </Suspense>
   );
 }
