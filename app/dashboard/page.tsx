@@ -1,67 +1,64 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
-import { db, auth } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [scores, setScores] = useState<any[]>([]);
+  const [avg, setAvg] = useState(0);
 
   useEffect(() => {
-    // Check if user is logged in
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
-       if (currentUser) {
-       setUser(currentUser);
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!u) return (window.location.href = "/login");
 
-        // Fetch this user's survey data
-        const q = query(
-          collection(db, "surveys"),
-          where("userId", "==", currentUser.uid)
-        );
+      setUser(u);
 
-        const querySnapshot = await getDocs(q);
+      const q = query(
+        collection(db, "surveys"),
+        where("userId", "==", u.uid)
+      );
 
-        const userScores: any[] = [];
-        querySnapshot.forEach((doc) => {
-          userScores.push(doc.data());
-        });
+      const snap = await getDocs(q);
 
-        setScores(userScores);
-      }
+      const data: any[] = [];
+      let total = 0;
+
+      snap.forEach((doc) => {
+        const d = doc.data();
+        data.push(d);
+        total += d.burnoutScore || 0;
+      });
+
+      setScores(data);
+      setAvg(data.length ? Math.round(total / data.length) : 0);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h1>Dashboard</h1>
 
-      {!user && <p>Please log in</p>}
+      <h2>Average Burnout: {avg}</h2>
 
-      {user && (
-        <>
-          <p>Welcome: {user.email}</p>
+      <div>
+        <a href="/survey?type=general">General</a><br/>
+        <a href="/survey?type=daily">Daily</a><br/>
+        <a href="/survey?type=weekly">Weekly</a><br/>
+        <a href="/survey?type=monthly">Monthly</a><br/>
+        <a href="/survey?type=habit">Habit Survey</a>
+      </div>
 
-          <h2>Your Burnout Scores:</h2>
-
-          {scores.length === 0 ? (
-            <p>No survey data yet</p>
-          ) : (
-            <ul>
-              {scores.map((s, index) => (
-                <li key={index}>
-                  Score: {s.burnoutScore} | Date:{" "}
-                  {new Date(s.date.seconds * 1000).toLocaleString()}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+      <h3>History</h3>
+      {scores.map((s, i) => (
+        <p key={i}>
+          {s.burnoutScore} ({s.type}) - {s.level}
+        </p>
+      ))}
     </div>
   );
 }
