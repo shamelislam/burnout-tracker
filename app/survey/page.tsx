@@ -79,7 +79,7 @@ export default function Survey() {
 
     if (block) return alert("Already completed this period");
 
-    const score = calculateBurnout(answers);
+    const score = calculateBurnout(answers, type);
 
     await addDoc(collection(db, "surveys"), {
       userId: user.uid,
